@@ -8,6 +8,7 @@ let todos = [];
 let categories = [];
 
 function getItems() {
+    FillComboBox();
     fetch(uri)
         .then(response => response.json())
         .then(data => _displayItems(data))
@@ -15,6 +16,7 @@ function getItems() {
 }
 
 function getCategories() {
+    FillComboBox();
     fetch(uric)
         .then(response => response.json())
         .then(data => _displayCategories(data))
@@ -118,12 +120,32 @@ function deleteCategory(id) {
         },
     })
         .then(() => {
+            getItems();
             getCategories();
         })
         .catch(error => console.error('Unable to delete item.', error));
 }
 
-function populateCategoryOptions() {
+function deleteCategory() {
+    //category => category.title == item.categoryId
+    const id = categories.find(category => category.title == document.getElementById('edit-title').value).id;
+    console.log(id);
+
+    fetch(uric + '/' + id, {
+        method: 'DELETE',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+    })
+        .then(() => {
+            getItems();
+            getCategories();
+        })
+        .catch(error => console.error('Unable to delete item.', error));
+}
+
+function populateCategoryOptions(index) {
     fetch('api/ItemCategories')
         .then(response => response.json())
         .then(categories => {
@@ -139,21 +161,28 @@ function populateCategoryOptions() {
                 //console.log(category.title);
                 selectElement.appendChild(option);
             });
+
+            selectElement[index].selected = true;
         })
         .catch(error => console.error('Error fetching categories:', error));
 }
 
 function displayEditForm(id) {
     const item = todos.find(item => item.id === id);
+    const category = categories.find(category => category.id == item.categoryId)
 
-    //document.getElementById('edit-categoryId').value = item.categoryId;
     document.getElementById('edit-name').value = item.name;
     document.getElementById('edit-id').value = item.id;
     document.getElementById('edit-isComplete').checked = item.isComplete;
     document.getElementById('editForm').style.display = 'block';
 
-    populateCategoryOptions();
-    document.getElementById('edit-select').value = item.categoryId;
+    populateCategoryOptions(categories.indexOf(category));
+
+    document.getElementById('edit-categoryId').value = category.id;
+    document.getElementById('edit-title').value = category.title;
+    document.getElementById('editFormC').style.display = 'block';
+
+    document.getElementById('Delete').style.display = 'block';
 }
 
 function updateItem() {
@@ -185,11 +214,40 @@ function updateItem() {
     return false;
 }
 
+function updateCategory()
+{
+    const itemCategoryId = document.getElementById('edit-categoryId').value;
+    //const itemCategoryId = document.getElementById('mySelect').value;
+
+    const item = {
+        id: parseInt(itemCategoryId, 10),
+        title: document.getElementById('edit-title').value.trim()
+    };
+
+    fetch(uric + '/' + itemCategoryId, {
+        method: 'PUT',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(item)
+    })
+        .then(() => getItems(), getCategories())
+        .catch(error => console.error('Unable to update category.', error));
+
+    closeInput();
+
+    return false;
+}
+
 function closeInput() {
     document.getElementById('editForm').style.display = 'none';
 }
 function closeInputC() {
     document.getElementById('editFormC').style.display = 'none';
+}
+function closeDelete() {
+    document.getElementById('Delete').style.display = 'none';
 }
 
 function _displayCount(itemCount) {
@@ -241,6 +299,20 @@ function _displayItems(data) {
         let categoryTitle = categories.find(c => c.id === item.categoryId)?.title;
         let textNode2 = document.createTextNode(categoryTitle);
         td5.appendChild(textNode2);
+
+        let editButtonC = button.cloneNode(false);
+        editButtonC.innerText = 'Edit';
+        //editButtonC.setAttribute('onclick', 'displayEditFormC(' + categoryId + ')');
+        editButtonC.setAttribute('onclick', 'displayEditForm(' + item.id + ')');
+
+        let deleteButtonC = button.cloneNode(false);
+        deleteButtonC.innerText = 'Delete';
+        deleteButtonC.setAttribute('onclick', 'deleteCategory(' + item.categoryId + ')');
+
+        let td6 = tr.insertCell(5);
+        td6.appendChild(editButtonC);
+        let td7 = tr.insertCell(6);
+        td7.appendChild(deleteButtonC);
     });
 
     todos = data;

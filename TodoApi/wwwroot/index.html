@@ -26,17 +26,25 @@
     <div id="editFormC">
         <h3>Изменить/Удалить категорию</h3>
         <form action="javascript:void(0);" method="POST" onsubmit="updateCategory()">
+            <input type="hidden" id="edit-categoryId">
             <input type="text" id="edit-title">
             <input type="submit" value="Save">
-            <input type="submit" value="Delete">
+            <!--<input type="submit" value="Delete">-->
             <a onclick="closeInputC()" aria-label="Close">&#10006;</a>
+        </form>
+    </div>
+
+    <div id="Delete">
+        <form action="javascript:void(0);" method="DELETE" onsubmit="deleteCategory()">
+            <input type="submit" value="Delete">
+            <a onclick="closeDelete()" aria-label="Close">&#10006;</a>
         </form>
     </div>
 
         <div id="editForm">
             <h3>Edit</h3>
             <form action="javascript:void(0);" onsubmit="updateItem()">
-                <input type="hidden" id="edit-categoryId">
+                <!--<input type="hidden" id="edit-categoryId">-->
                 <input type="hidden" id="edit-id">
                 <input type="checkbox" id="edit-isComplete">
                 <input type="text" id="edit-name">
@@ -67,8 +75,9 @@
 
         <script src="js/site.js" asp-append-version="true"></script>
         <script type="text/javascript">
-            getItems();
+            //getItems();
             getCategories();
+            getItems();
         </script>
 </body>
 </html>
