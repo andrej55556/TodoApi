@@ -7,19 +7,22 @@ const uric = 'api/ItemCategories';
 let todos = [];
 let categories = [];
 
-function getItems() {
+async function getItems() {
     FillComboBox();
-    fetch(uri)
+    await fetch(uri)
         .then(response => response.json())
-        .then(data => _displayItems(data))
+        //.then(getCategories())
+        //.then(data => await _displayItems(data))
+        .then(async function (data) { await _displayItems(data) })
         .catch(error => console.error('Unable to get items.', error));
 }
 
-function getCategories() {
+async function getCategories() {
     FillComboBox();
-    fetch(uric)
+    await fetch(uric)
         .then(response => response.json())
-        .then(data => _displayCategories(data))
+        //.then(data => await _displayCategories(data))
+        .then(async function (data) { await _displayCategories(data) })
         .catch(error => console.error('Unable to get categories.', error));
 }
 
@@ -214,30 +217,41 @@ function updateItem() {
     return false;
 }
 
+let selected_id = -1;
+
 function updateCategory()
 {
-    const itemCategoryId = document.getElementById('edit-categoryId').value;
-    //const itemCategoryId = document.getElementById('mySelect').value;
+    //const itemCategoryId = document.getElementById('edit-categoryId').value;
+    const itemCategoryId = selected_id;
+    if(itemCategoryId != -1)
+    { 
+        const item = {
+            id: parseInt(itemCategoryId, 10),
+            title: document.getElementById('edit-title').value.trim()
+        };
 
-    const item = {
-        id: parseInt(itemCategoryId, 10),
-        title: document.getElementById('edit-title').value.trim()
-    };
+        fetch(uric + '/' + itemCategoryId, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(item)
+        })
+            .then(() => getItems(), getCategories())
+            .catch(error => console.error('Unable to update category.', error));
 
-    fetch(uric + '/' + itemCategoryId, {
-        method: 'PUT',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(item)
-    })
-        .then(() => getItems(), getCategories())
-        .catch(error => console.error('Unable to update category.', error));
-
-    closeInput();
+        closeInput();
+    }
 
     return false;
+}
+
+function editc()
+{
+    const itemCategoryId = document.getElementById('mySelect').options[document.getElementById('mySelect').selectedIndex].text;
+    document.getElementById('edit-title').value = itemCategoryId;
+    selected_id = document.getElementById('mySelect').value;
 }
 
 function closeInput() {
@@ -257,7 +271,8 @@ function _displayCount(itemCount) {
     document.getElementById('counter').textContent = itemCount + ' ' + name;
 }
 
-function _displayItems(data) {
+async function _displayItems(data) {
+    await getCategories();
     const tBody = document.getElementById('todos');
     tBody.innerHTML = '';
 
@@ -296,6 +311,7 @@ function _displayItems(data) {
 
         let td5 = tr.insertCell(4);
         //let categoryTitle = categories.find(c => c.id === item.categoryId)?.title || "Unknown";
+        //alert(JSON.stringify(categories/*.filter(c => { return c.id === item.categoryId })[0]*/, null, 2));
         let categoryTitle = categories.find(c => c.id === item.categoryId)?.title;
         let textNode2 = document.createTextNode(categoryTitle);
         td5.appendChild(textNode2);
@@ -318,6 +334,9 @@ function _displayItems(data) {
     todos = data;
 }
 
-function _displayCategories(data) {
+async function _displayCategories(data) {
+    if (data.length == 0)
+        return;
     categories = data;
+    //alert(JSON.stringify(categories, null, 2));
 }
